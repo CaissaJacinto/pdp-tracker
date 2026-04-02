@@ -517,7 +517,7 @@ function AdminScreen({ users, dispatch }) {
           {/* Milestone checklist */}
           <div style={{ ...s.card, marginBottom:"1.25rem" }}>
             <p style={{ margin:"0 0 10px", fontSize:14, fontWeight:500 }}>Milestone reflections</p>
-            <div style={{ display:"flex", gap:12" }}>
+            <div style={{ display:"flex", gap:12 }}>
               {[30,60,90].map(m => {
                 const done = !!selected.reflections?.[m];
                 return (
