@@ -55,32 +55,36 @@ function LoginScreen({ dispatch, users, saveUsers }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [cohort, setCohort] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [error, setError] = useState("");
 
   const s = {
-    wrap: { maxWidth: 420, margin: "4rem auto", padding: "0 1.5rem" },
+    wrap: { maxWidth: 440, margin: "4rem auto", padding: "0 1.5rem" },
     card: { background: "#fff", border: "1px solid #e5e5e5", borderRadius: 12, padding: "2rem" },
     label: { fontSize: 13, color: "#666", display: "block", marginBottom: 4 },
-    input: { marginBottom: 14 },
+    field: { marginBottom: 14 },
     btn: { width: "100%", padding: "10px", background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", marginTop: 4 },
     tabs: { display: "flex", gap: 8, marginBottom: "1.5rem" },
-    tab: (active) => ({ flex: 1, padding: "8px", background: active ? "#f0f0ee" : "transparent", border: "1px solid #e0e0e0", borderRadius: 8, cursor: "pointer", fontSize: 14 }),
+    tab: (a) => ({ flex: 1, padding: "8px", background: a ? "#f0f0ee" : "transparent", border: "1px solid #e0e0e0", borderRadius: 8, cursor: "pointer", fontSize: 14 }),
     err: { fontSize: 13, color: "#c0392b", marginBottom: 10 },
-    title: { fontSize: 22, fontWeight: 500, margin: "0 0 4px" },
-    sub: { fontSize: 14, color: "#666", margin: "0 0 1.5rem" },
+    hint: { fontSize: 12, color: "#888", marginTop: 12, textAlign: "center" },
   };
 
   const handleLogin = () => {
-    if (code === ADMIN_CODE) { dispatch({ type: "ADMIN_LOGIN" }); return; }
+    if (adminCode === ADMIN_CODE) { dispatch({ type: "ADMIN_LOGIN" }); return; }
     if (!users[email]) { setError("No account found. Please register first."); return; }
     dispatch({ type: "LOGIN", user: email });
   };
 
   const handleRegister = () => {
-    if (!name.trim() || !email.trim()) { setError("Please fill in all fields."); return; }
+    if (!name.trim() || !email.trim() || !cohort.trim()) { setError("Please fill in all fields."); return; }
     if (users[email]) { setError("An account already exists for this email."); return; }
-    const u = { name, email, startDate: getToday(), onboarded: false, plan: { keyLearnings: "", identityShift: "", strengths: "", habits: [{ action:"",cue:"",craving:"",response:"",reward:"" },{ action:"",cue:"",craving:"",response:"",reward:"" }] }, checkins: {}, reflections: {} };
+    const u = {
+      name, email, cohort, startDate: getToday(), onboarded: false,
+      plan: { keyLearnings: "", identityShift: "", strengths: "", habits: [{ action:"",cue:"",craving:"",response:"",reward:"" },{ action:"",cue:"",craving:"",response:"",reward:"" }] },
+      checkins: {}, reflections: {}
+    };
     saveUsers({ ...users, [email]: u });
     dispatch({ type: "LOGIN", user: email });
   };
@@ -89,18 +93,34 @@ function LoginScreen({ dispatch, users, saveUsers }) {
     <div style={s.wrap}>
       <div style={s.card}>
         <p style={{ fontSize: 11, color: "#999", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 1 }}>Workshop tool</p>
-        <h1 style={s.title}>Personal Development Tracker</h1>
-        <p style={s.sub}>90-day habit & reflection tracker</p>
+        <h1 style={{ fontSize: 22, fontWeight: 500, margin: "0 0 4px" }}>Personal Development Tracker</h1>
+        <p style={{ fontSize: 14, color: "#666", margin: "0 0 1.5rem" }}>90-day habit & reflection tracker</p>
 
         <div style={s.tabs}>
-          {["login","register"].map(m => <button key={m} style={s.tab(mode===m)} onClick={() => {setMode(m);setError("");}}>{m==="login"?"Sign in":"Register"}</button>)}
+          {["login","register"].map(m => <button key={m} style={s.tab(mode===m)} onClick={() => { setMode(m); setError(""); }}>{m==="login"?"Sign in":"Register"}</button>)}
         </div>
 
-        {mode === "register" && <div style={s.input}><label style={s.label}>Full name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" /></div>}
-        <div style={s.input}><label style={s.label}>{mode==="login"?"Email":"Email"}</label><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" /></div>
-        {mode === "login" && <div style={s.input}><label style={s.label}>Admin code (admins only)</label><input value={code} onChange={e=>setCode(e.target.value)} placeholder="Leave blank if participant" /></div>}
+        {mode === "register" && (
+          <>
+            <div style={s.field}><label style={s.label}>Full name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" /></div>
+            <div style={s.field}><label style={s.label}>Email</label><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" /></div>
+            <div style={s.field}>
+              <label style={s.label}>Cohort</label>
+              <input value={cohort} onChange={e=>setCohort(e.target.value)} placeholder="e.g. Cohort 1 – March 2026" />
+            </div>
+          </>
+        )}
+
+        {mode === "login" && (
+          <>
+            <div style={s.field}><label style={s.label}>Email</label><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" /></div>
+            <div style={s.field}><label style={s.label}>Admin code <span style={{ color:"#bbb" }}>(admins only — leave blank if participant)</span></label><input value={adminCode} onChange={e=>setAdminCode(e.target.value)} placeholder="admin code" /></div>
+          </>
+        )}
+
         {error && <p style={s.err}>{error}</p>}
         <button style={s.btn} onClick={mode==="login"?handleLogin:handleRegister}>{mode==="login"?"Sign in":"Create account"}</button>
+        {mode === "login" && <p style={s.hint}>No password needed — just your email address to sign in.</p>}
       </div>
     </div>
   );
@@ -137,33 +157,61 @@ function ParticipantApp({ user, users, saveUsers, dispatch }) {
 
   const s = {
     wrap: { maxWidth: 560, margin: "0 auto", padding: "1.5rem 1rem" },
-    tabs: { display: "flex", gap: 6, marginBottom: "1.5rem", borderBottom: "1px solid #eee", paddingBottom: "1rem" },
-    tab: (active) => ({ fontSize: 13, padding: "6px 12px", borderRadius: 8, border: active?"1px solid #ccc":"1px solid transparent", background: active?"#f5f5f3":"none", cursor: "pointer" }),
+    tab: (a) => ({ fontSize: 13, padding: "6px 12px", borderRadius: 8, border: a?"1px solid #ccc":"1px solid transparent", background: a?"#f5f5f3":"none", cursor: "pointer" }),
     card: { padding: "12px 16px", border: "1px solid #e5e5e5", borderRadius: 10, marginBottom: 8 },
     label: { fontSize: 13, color: "#666", display: "block", marginBottom: 4 },
     textarea: { width:"100%", boxSizing:"border-box", resize:"vertical", padding:10, border:"1px solid #ddd", borderRadius:8, fontSize:14, fontFamily:"inherit", marginBottom:14 },
     btn: { width:"100%", padding:"10px", background:"#1a1a1a", color:"#fff", border:"none", borderRadius:8, fontSize:14, fontWeight:500, cursor:"pointer" },
-    statGrid: { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:"1.5rem" },
     stat: { background:"#f5f5f3", borderRadius:8, padding:"12px", textAlign:"center" },
   };
+
+  // Milestone progress bar
+  const milestones = [30, 60, 90];
 
   return (
     <div style={s.wrap}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.5rem" }}>
         <div>
-          <p style={{ fontSize:11, color:"#999", margin:"0 0 2px", textTransform:"uppercase", letterSpacing:1 }}>Day {dayNum} · {currentPhase.label}</p>
+          <p style={{ fontSize:11, color:"#999", margin:"0 0 2px", textTransform:"uppercase", letterSpacing:1 }}>Day {dayNum} · {currentPhase.label} · {data?.cohort}</p>
           <h2 style={{ fontSize:18, fontWeight:500, margin:0 }}>Hi, {data?.name?.split(" ")[0]}</h2>
         </div>
         <button onClick={() => dispatch({ type:"LOGOUT" })} style={{ fontSize:13, color:"#999", background:"none", border:"none", cursor:"pointer" }}>Sign out</button>
       </div>
 
-      <div style={s.statGrid}>
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:"1rem" }}>
         {[["Day", dayNum],["Streak", streak+" days"],["Check-ins", Object.keys(data?.checkins||{}).length]].map(([l,v]) => (
           <div key={l} style={s.stat}><p style={{ fontSize:11, color:"#999", margin:"0 0 4px" }}>{l}</p><p style={{ fontSize:18, fontWeight:500, margin:0 }}>{v}</p></div>
         ))}
       </div>
 
-      <div style={s.tabs}>
+      {/* Milestone tracker */}
+      <div style={{ background:"#f5f5f3", borderRadius:10, padding:"12px 16px", marginBottom:"1.5rem" }}>
+        <p style={{ fontSize:12, color:"#888", margin:"0 0 10px", textTransform:"uppercase", letterSpacing:1 }}>Milestones</p>
+        <div style={{ display:"flex", alignItems:"center", gap:0 }}>
+          {milestones.map((m, i) => {
+            const done = dayNum >= m;
+            const hasRefl = !!data?.reflections?.[m];
+            return (
+              <div key={m} style={{ display:"flex", alignItems:"center", flex: i < milestones.length - 1 ? 1 : "none" }}>
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                  <div style={{ width:32, height:32, borderRadius:"50%", background: hasRefl?"#1a1a1a": done?"#e8e8e8":"#fff", border:"2px solid", borderColor: done?"#1a1a1a":"#ddd", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {hasRefl
+                      ? <svg width="14" height="14" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <span style={{ fontSize:11, fontWeight:500, color: done?"#1a1a1a":"#ccc" }}>{m}</span>
+                    }
+                  </div>
+                  <span style={{ fontSize:11, color: done?"#1a1a1a":"#bbb", whiteSpace:"nowrap" }}>Day {m}{hasRefl?" ✓":done?" due":""}</span>
+                </div>
+                {i < milestones.length - 1 && <div style={{ flex:1, height:2, background: dayNum > m?"#1a1a1a":"#e0e0e0", margin:"0 4px", marginBottom:16 }}/>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", gap:6, marginBottom:"1.5rem", borderBottom:"1px solid #eee", paddingBottom:"1rem" }}>
         {[["plan","My plan"],["checkin","Daily check-in"],["history","History"]].map(([t,l]) => (
           <button key={t} style={s.tab(tab===t)} onClick={() => setTab(t)}>{l}</button>
         ))}
@@ -205,7 +253,6 @@ function DailyCheckin({ habits, todayCheckin, onSave }) {
   const [checks, setChecks] = useState(todayCheckin?.habits || habits.map(() => false));
   const [note, setNote] = useState(todayCheckin?.note || "");
   const [done, setDone] = useState(!!todayCheckin);
-
   const activeHabits = habits.filter(h => h.action);
 
   return (
@@ -261,7 +308,7 @@ function History({ checkins, habits, reflections }) {
   return (
     <div>
       <p style={{ fontSize:14, color:"#666", marginTop:0 }}>Last 14 check-ins</p>
-      {dates.length === 0 && <p style={{ fontSize:14, color:"#666" }}>No check-ins yet. Start today!</p>}
+      {dates.length === 0 && <p style={{ fontSize:14, color:"#999" }}>No check-ins yet. Start today!</p>}
       {dates.map(date => {
         const c = checkins[date];
         const done = c.habits?.filter(Boolean).length || 0;
@@ -277,16 +324,11 @@ function History({ checkins, habits, reflections }) {
       })}
       {Object.keys(reflections).length > 0 && (
         <>
-          <p style={{ fontSize:14, fontWeight:500, marginTop:"1.5rem" }}>Reflections</p>
+          <p style={{ fontSize:14, fontWeight:500, marginTop:"1.5rem" }}>Milestone reflections</p>
           {Object.entries(reflections).map(([day,r]) => (
             <div key={day} style={{ padding:"10px 14px", border:"1px solid #e5e5e5", borderRadius:10, marginBottom:8 }}>
               <p style={{ margin:"0 0 8px", fontSize:14, fontWeight:500 }}>Day {day} reflection</p>
-              {REFLECTION_QUESTIONS.map((q,i) => r.answers?.[i] && (
-                <div key={i} style={{ marginBottom:6 }}>
-                  <p style={{ margin:0, fontSize:12, color:"#888" }}>{q}</p>
-                  <p style={{ margin:"2px 0 0", fontSize:13 }}>{r.answers[i]}</p>
-                </div>
-              ))}
+              {REFLECTION_QUESTIONS.map((q,i) => r.answers?.[i] && <div key={i} style={{ marginBottom:6 }}><p style={{ margin:0, fontSize:12, color:"#888" }}>{q}</p><p style={{ margin:"2px 0 0", fontSize:13 }}>{r.answers[i]}</p></div>)}
             </div>
           ))}
         </>
@@ -301,51 +343,104 @@ function AdminScreen({ users, dispatch }) {
   const [selected, setSelected] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState("");
+  const [cohortFilter, setCohortFilter] = useState("All");
+  const [cohortReport, setCohortReport] = useState("");
+  const [generatingCohort, setGeneratingCohort] = useState(false);
 
   const participants = Object.values(users);
-  const totalCheckins = participants.reduce((sum,u) => sum + Object.keys(u.checkins||{}).length, 0);
-  const avgRate = participants.length === 0 ? 0 : Math.round(participants.reduce((sum,u) => {
-    const day = getDayNumber(u.startDate);
-    return sum + (day > 1 ? Math.round((Object.keys(u.checkins||{}).length / (day-1)) * 100) : 0);
-  }, 0) / participants.length);
+  const cohorts = ["All", ...Array.from(new Set(participants.map(u=>u.cohort).filter(Boolean)))];
+  const filtered = cohortFilter === "All" ? participants : participants.filter(u=>u.cohort===cohortFilter);
 
-  const generateReport = async (u) => {
+  const totalCheckins = filtered.reduce((sum,u) => sum+Object.keys(u.checkins||{}).length, 0);
+  const avgRate = filtered.length === 0 ? 0 : Math.round(filtered.reduce((sum,u) => {
+    const day = getDayNumber(u.startDate);
+    return sum + (day > 1 ? Math.round((Object.keys(u.checkins||{}).length/(day-1))*100) : 0);
+  }, 0) / filtered.length);
+
+  const callAI = async (prompt) => {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.REACT_APP_ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1200,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    return data.content?.map(c=>c.text||"").join("\n") || "Unable to generate report.";
+  };
+
+  const generateIndividualReport = async (u) => {
     setGenerating(true); setReport("");
-    const summary = `Participant: ${u.name}\nDay: ${getDayNumber(u.startDate)}\nTotal check-ins: ${Object.keys(u.checkins||{}).length}\nKey learnings: ${u.plan?.keyLearnings}\nIdentity shift: ${u.plan?.identityShift}\nHabit 1: ${u.plan?.habits?.[0]?.action}\nHabit 2: ${u.plan?.habits?.[1]?.action}\nReflections: ${JSON.stringify(u.reflections||{})}\nNotes: ${Object.values(u.checkins||{}).map(c=>c.note).filter(Boolean).join(" | ")}`;
+    const day = getDayNumber(u.startDate);
+    const checkinCount = Object.keys(u.checkins||{}).length;
+    const possibleDays = Math.max(day - 1, 1);
+    const rate = Math.round((checkinCount / possibleDays) * 100);
+    const summary = `Participant: ${u.name}\nCohort: ${u.cohort}\nDay: ${day} of 90\nCheck-ins completed: ${checkinCount}/${possibleDays} (${rate}%)\nKey learnings: ${u.plan?.keyLearnings}\nIdentity shift: ${u.plan?.identityShift}\nStrengths: ${u.plan?.strengths}\nHabit 1: ${u.plan?.habits?.[0]?.action}\nHabit 2: ${u.plan?.habits?.[1]?.action}\nDay 30 reflection: ${JSON.stringify(u.reflections?.[30]||{})}\nDay 60 reflection: ${JSON.stringify(u.reflections?.[60]||{})}\nDay 90 reflection: ${JSON.stringify(u.reflections?.[90]||{})}\nDaily notes: ${Object.values(u.checkins||{}).map(c=>c.note).filter(Boolean).join(" | ")}`;
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.REACT_APP_ANTHROPIC_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: `You are a learning & development coach. Based on this participant's 90-day tracker data, write a concise progress report with: (1) quantitative summary, (2) qualitative insights from reflections and notes, (3) 3 specific recommended next steps. Be warm, professional, and actionable.\n\n${summary}` }]
-        })
-      });
-      const data = await res.json();
-      setReport(data.content?.map(c=>c.text||"").join("\n") || "Unable to generate report.");
+      const text = await callAI(`You are a warm and professional learning & development coach writing a personal progress report for a workshop participant named ${u.name}. Address them directly (second person). Format your response using markdown with these exact sections:\n\n# 90-Day Progress Report: ${u.name}\n\n## Quantitative Summary\n(bullet points with key numbers — days completed, check-in rate, milestones reached, reflections submitted)\n\n## Qualitative Insights\n(2-3 paragraphs of warm, personalised insights based on their reflections, notes, and habit data)\n\n## Recommended Next Steps\n(3 specific, numbered, actionable next steps with bold titles)\n\nEnd with an encouraging closing line and note when the next review is. Data:\n\n${summary}`);
+      setReport(text);
     } catch { setReport("Error generating report. Please try again."); }
     setGenerating(false);
   };
 
+  const generateCohortReport = async () => {
+    setGeneratingCohort(true); setCohortReport("");
+    const cohortName = cohortFilter === "All" ? "All Participants" : cohortFilter;
+    const summaries = filtered.map(u => {
+      const day = getDayNumber(u.startDate);
+      const checkinCount = Object.keys(u.checkins||{}).length;
+      const rate = day > 1 ? Math.round((checkinCount/(day-1))*100) : 0;
+      return `- ${u.name}: Day ${day}, ${checkinCount} check-ins (${rate}%), ${Object.keys(u.reflections||{}).length} reflections. Habits: "${u.plan?.habits?.[0]?.action}" and "${u.plan?.habits?.[1]?.action}". Identity shift: "${u.plan?.identityShift}". Notes: ${Object.values(u.checkins||{}).map(c=>c.note).filter(Boolean).slice(0,3).join(" | ")}`;
+    }).join("\n");
+    try {
+      const text = await callAI(`You are a learning & development consultant writing a cohort-level progress report for a client. Write entirely in third person (refer to participants as "participants", "the cohort", "they", never "you"). Format using markdown:\n\n# Cohort Report: ${cohortName}\n\n## Overview\n(cohort size, average participation rate, milestone completion)\n\n## Quantitative Summary\n(key numbers across the cohort — participation rates, habit completion trends, reflection submissions)\n\n## Qualitative Themes\n(2-3 paragraphs identifying common themes, patterns, shared challenges, and strengths across the cohort based on their data)\n\n## Individual Highlights\n(brief 1-line note on each participant's standout progress or area of focus)\n\n## Recommended Next Steps for the Cohort\n(3 specific recommendations for the facilitator or client on how to support this cohort going forward)\n\nCohort data:\n${summaries}`);
+      setCohortReport(text);
+    } catch { setCohortReport("Error generating cohort report. Please try again."); }
+    setGeneratingCohort(false);
+  };
+
   const exportCSV = () => {
-    const rows = [["Name","Email","Start Date","Day","Check-ins","Reflections","Habit 1","Habit 2"]];
-    participants.forEach(u => rows.push([u.name,u.email,u.startDate,getDayNumber(u.startDate),Object.keys(u.checkins||{}).length,Object.keys(u.reflections||{}).length,u.plan?.habits?.[0]?.action,u.plan?.habits?.[1]?.action]));
+    const rows = [["Name","Email","Cohort","Start Date","Day","Check-ins","Reflections","Habit 1","Habit 2"]];
+    filtered.forEach(u => rows.push([u.name,u.email,u.cohort,u.startDate,getDayNumber(u.startDate),Object.keys(u.checkins||{}).length,Object.keys(u.reflections||{}).length,u.plan?.habits?.[0]?.action,u.plan?.habits?.[1]?.action]));
     const csv = rows.map(r=>r.map(c=>`"${c||""}"`).join(",")).join("\n");
-    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="participants.csv"; a.click();
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=`${cohortFilter}-participants.csv`; a.click();
   };
 
   const s = {
-    wrap: { maxWidth:680, margin:"0 auto", padding:"1.5rem 1rem" },
-    card: { padding:"12px 16px", border:"1px solid #e5e5e5", borderRadius:10, marginBottom:8 },
-    btn: { fontSize:13, padding:"6px 12px", border:"1px solid #ddd", borderRadius:8, background:"none", cursor:"pointer" },
-    bigBtn: { width:"100%", padding:"10px", background:"#1a1a1a", color:"#fff", border:"none", borderRadius:8, fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:"1rem" },
-    stat: { background:"#f5f5f3", borderRadius:8, padding:"12px", textAlign:"center" },
+    wrap: { maxWidth: 700, margin: "0 auto", padding: "1.5rem 1rem" },
+    card: { padding: "12px 16px", border: "1px solid #e5e5e5", borderRadius: 10, marginBottom: 8 },
+    btn: { fontSize: 13, padding: "6px 12px", border: "1px solid #ddd", borderRadius: 8, background: "none", cursor: "pointer" },
+    bigBtn: { width: "100%", padding: "10px", background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: "1rem" },
+    stat: { background: "#f5f5f3", borderRadius: 8, padding: "12px", textAlign: "center" },
+    report: { padding: "1.25rem", border: "1px solid #e5e5e5", borderRadius: 10, fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-wrap" },
+  };
+
+  // Simple markdown renderer
+  const renderReport = (text) => {
+    if (!text) return null;
+    return text.split("\n").map((line, i) => {
+      if (line.startsWith("# ")) return <h2 key={i} style={{ fontSize:18, fontWeight:600, margin:"0 0 12px" }}>{line.slice(2)}</h2>;
+      if (line.startsWith("## ")) return <h3 key={i} style={{ fontSize:15, fontWeight:600, margin:"16px 0 6px", borderBottom:"1px solid #eee", paddingBottom:4 }}>{line.slice(3)}</h3>;
+      if (line.startsWith("### ")) return <h4 key={i} style={{ fontSize:14, fontWeight:600, margin:"12px 0 4px" }}>{line.slice(4)}</h4>;
+      if (line.startsWith("- ") || line.startsWith("* ")) {
+        const content = line.slice(2).replace(/\*\*(.*?)\*\*/g, (_,t) => `<strong>${t}</strong>`);
+        return <li key={i} style={{ marginBottom:4, fontSize:14 }} dangerouslySetInnerHTML={{__html:content}}/>;
+      }
+      if (/^\d+\./.test(line)) {
+        const content = line.replace(/\*\*(.*?)\*\*/g, (_,t) => `<strong>${t}</strong>`);
+        return <p key={i} style={{ margin:"6px 0", fontSize:14 }} dangerouslySetInnerHTML={{__html:content}}/>;
+      }
+      if (line.trim() === "") return <br key={i}/>;
+      const content = line.replace(/\*\*(.*?)\*\*/g, (_,t) => `<strong>${t}</strong>`);
+      return <p key={i} style={{ margin:"4px 0", fontSize:14 }} dangerouslySetInnerHTML={{__html:content}}/>;
+    });
   };
 
   return (
@@ -361,28 +456,51 @@ function AdminScreen({ users, dispatch }) {
         </div>
       </div>
 
+      {/* Cohort filter */}
+      <div style={{ display:"flex", gap:8, marginBottom:"1.25rem", flexWrap:"wrap" }}>
+        {cohorts.map(c => (
+          <button key={c} onClick={() => { setCohortFilter(c); setView("dashboard"); setReport(""); setCohortReport(""); }} style={{ fontSize:13, padding:"5px 12px", borderRadius:20, border:"1px solid", borderColor: cohortFilter===c?"#1a1a1a":"#ddd", background: cohortFilter===c?"#1a1a1a":"transparent", color: cohortFilter===c?"#fff":"#333", cursor:"pointer" }}>{c}</button>
+        ))}
+      </div>
+
+      {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:"1.5rem" }}>
-        {[["Participants",participants.length],["Total check-ins",totalCheckins],["Avg completion",avgRate+"%"]].map(([l,v]) => (
+        {[["Participants",filtered.length],["Total check-ins",totalCheckins],["Avg completion",avgRate+"%"]].map(([l,v]) => (
           <div key={l} style={s.stat}><p style={{ fontSize:11, color:"#999", margin:"0 0 4px" }}>{l}</p><p style={{ fontSize:18, fontWeight:500, margin:0 }}>{v}</p></div>
         ))}
       </div>
 
       {view === "dashboard" && (
         <>
-          <p style={{ fontSize:14, color:"#666", margin:"0 0 12px" }}>Click a participant to view their progress and generate a report.</p>
-          {participants.length === 0 && <p style={{ fontSize:14, color:"#999" }}>No participants registered yet.</p>}
-          {participants.map(u => {
+          {/* Cohort AI report */}
+          <div style={{ ...s.card, marginBottom:"1.25rem" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div>
+                <p style={{ margin:0, fontSize:14, fontWeight:500 }}>Cohort report</p>
+                <p style={{ margin:"2px 0 0", fontSize:13, color:"#888" }}>{cohortFilter === "All" ? "All participants" : cohortFilter}</p>
+              </div>
+              <button style={{ ...s.btn, background: generatingCohort?"#f5f5f3":"#1a1a1a", color: generatingCohort?"#999":"#fff", borderColor:"#1a1a1a" }} onClick={generateCohortReport} disabled={generatingCohort || filtered.length === 0}>
+                {generatingCohort ? "Generating…" : "Generate AI cohort report"}
+              </button>
+            </div>
+            {cohortReport && <div style={{ marginTop:"1rem", borderTop:"1px solid #eee", paddingTop:"1rem" }}>{renderReport(cohortReport)}</div>}
+          </div>
+
+          <p style={{ fontSize:14, color:"#666", margin:"0 0 12px" }}>Click a participant to view their progress and generate an individual report.</p>
+          {filtered.length === 0 && <p style={{ fontSize:14, color:"#999" }}>No participants in this cohort yet.</p>}
+          {filtered.map(u => {
             const day = getDayNumber(u.startDate);
             const rate = day > 1 ? Math.round((Object.keys(u.checkins||{}).length/(day-1))*100) : 0;
+            const reflCount = Object.keys(u.reflections||{}).length;
             return (
               <div key={u.email} onClick={() => { setSelected(u); setView("detail"); setReport(""); }} style={{ ...s.card, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div>
                   <p style={{ margin:0, fontSize:14, fontWeight:500 }}>{u.name}</p>
-                  <p style={{ margin:"2px 0 0", fontSize:13, color:"#888" }}>{u.email} · Day {day}</p>
+                  <p style={{ margin:"2px 0 0", fontSize:13, color:"#888" }}>{u.cohort} · Day {day}</p>
                 </div>
                 <div style={{ textAlign:"right" }}>
                   <p style={{ margin:0, fontSize:13, fontWeight:500, color:rate>=70?"#27ae60":rate>=40?"#e67e22":"#e74c3c" }}>{rate}%</p>
-                  <p style={{ margin:"2px 0 0", fontSize:12, color:"#999" }}>{Object.keys(u.reflections||{}).length} reflections</p>
+                  <p style={{ margin:"2px 0 0", fontSize:12, color:"#999" }}>{reflCount}/3 reflections</p>
                 </div>
               </div>
             );
@@ -392,15 +510,34 @@ function AdminScreen({ users, dispatch }) {
 
       {view === "detail" && selected && (
         <div>
-          <button onClick={() => { setView("dashboard"); setReport(""); }} style={{ ...s.btn, border:"none", padding:"0 0 12px", color:"#666", background:"none" }}>← Back</button>
+          <button onClick={() => { setView("dashboard"); setReport(""); }} style={{ ...s.btn, border:"none", padding:"0 0 12px", color:"#666" }}>← Back</button>
           <h3 style={{ fontSize:16, fontWeight:500, margin:"0 0 2px" }}>{selected.name}</h3>
-          <p style={{ fontSize:13, color:"#888", margin:"0 0 1.5rem" }}>{selected.email}</p>
+          <p style={{ fontSize:13, color:"#888", margin:"0 0 1.5rem" }}>{selected.email} · {selected.cohort}</p>
+
+          {/* Milestone checklist */}
+          <div style={{ ...s.card, marginBottom:"1.25rem" }}>
+            <p style={{ margin:"0 0 10px", fontSize:14, fontWeight:500 }}>Milestone reflections</p>
+            <div style={{ display:"flex", gap:12" }}>
+              {[30,60,90].map(m => {
+                const done = !!selected.reflections?.[m];
+                return (
+                  <div key={m} style={{ flex:1, padding:"10px", background: done?"#f0faf5":"#fafafa", border:"1px solid", borderColor: done?"#a8e6c8":"#e5e5e5", borderRadius:8, textAlign:"center" }}>
+                    <p style={{ margin:0, fontSize:13, fontWeight:500, color: done?"#27ae60":"#999" }}>Day {m}</p>
+                    <p style={{ margin:"2px 0 0", fontSize:12, color: done?"#27ae60":"#bbb" }}>{done?"Completed":"Not yet"}</p>
+                  </div>
+                );
+              })}
+            </div>
+            {Object.entries(selected.reflections||{}).map(([day,r]) => (
+              <div key={day} style={{ marginTop:12, borderTop:"1px solid #eee", paddingTop:10 }}>
+                <p style={{ margin:"0 0 6px", fontSize:13, fontWeight:500 }}>Day {day} responses</p>
+                {REFLECTION_QUESTIONS.map((q,i) => r.answers?.[i] && <div key={i} style={{ marginBottom:8 }}><p style={{ margin:0, fontSize:12, color:"#888" }}>{q}</p><p style={{ margin:"2px 0 0", fontSize:13 }}>{r.answers[i]}</p></div>)}
+              </div>
+            ))}
+          </div>
 
           {[["Key learnings",selected.plan?.keyLearnings],["Identity shift",selected.plan?.identityShift],["Strengths",selected.plan?.strengths]].map(([l,v]) => v && (
-            <div key={l} style={{ marginBottom:12 }}>
-              <p style={{ margin:0, fontSize:12, color:"#888" }}>{l}</p>
-              <p style={{ margin:"2px 0 0", fontSize:14 }}>{v}</p>
-            </div>
+            <div key={l} style={{ marginBottom:12 }}><p style={{ margin:0, fontSize:12, color:"#888" }}>{l}</p><p style={{ margin:"2px 0 0", fontSize:14 }}>{v}</p></div>
           ))}
 
           {selected.plan?.habits?.filter(h=>h.action).map((h,i) => (
@@ -410,18 +547,11 @@ function AdminScreen({ users, dispatch }) {
             </div>
           ))}
 
-          {Object.entries(selected.reflections||{}).map(([day,r]) => (
-            <div key={day} style={{ ...s.card, marginBottom:10 }}>
-              <p style={{ margin:"0 0 8px", fontSize:14, fontWeight:500 }}>Day {day} reflection</p>
-              {REFLECTION_QUESTIONS.map((q,i) => r.answers?.[i] && <div key={i} style={{ marginBottom:6 }}><p style={{ margin:0, fontSize:12, color:"#888" }}>{q}</p><p style={{ margin:"2px 0 0", fontSize:13 }}>{r.answers[i]}</p></div>)}
-            </div>
-          ))}
-
-          <button style={{ ...s.bigBtn, opacity:generating?0.6:1 }} onClick={() => generateReport(selected)} disabled={generating}>
-            {generating ? "Generating AI report…" : "Generate AI report"}
+          <button style={{ ...s.bigBtn, opacity:generating?0.6:1 }} onClick={() => generateIndividualReport(selected)} disabled={generating}>
+            {generating ? "Generating AI report…" : "Generate individual AI report"}
           </button>
 
-          {report && <div style={{ padding:"1rem", border:"1px solid #e5e5e5", borderRadius:10, whiteSpace:"pre-wrap", fontSize:14, lineHeight:1.7 }}>{report}</div>}
+          {report && <div style={s.report}>{renderReport(report)}</div>}
         </div>
       )}
     </div>
