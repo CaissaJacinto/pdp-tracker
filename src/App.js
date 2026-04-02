@@ -1,7 +1,7 @@
 import { useState, useReducer } from "react";
 
 const ADMIN_CODE = "admin2024";
-const ANTHROPIC_KEY = process.env.REACT_APP_ANTHROPIC_KEY;
+
 const REFLECTION_QUESTIONS = [
   "What progress have you made on your habits so far?",
   "What has been your biggest challenge and how did you handle it?",
@@ -313,7 +313,20 @@ function AdminScreen({ users, dispatch }) {
     setGenerating(true); setReport("");
     const summary = `Participant: ${u.name}\nDay: ${getDayNumber(u.startDate)}\nTotal check-ins: ${Object.keys(u.checkins||{}).length}\nKey learnings: ${u.plan?.keyLearnings}\nIdentity shift: ${u.plan?.identityShift}\nHabit 1: ${u.plan?.habits?.[0]?.action}\nHabit 2: ${u.plan?.habits?.[1]?.action}\nReflections: ${JSON.stringify(u.reflections||{})}\nNotes: ${Object.values(u.checkins||{}).map(c=>c.note).filter(Boolean).join(" | ")}`;
     try {
-      const res = await method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },/v1/messages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000, messages:[{ role:"user", content:`You are a learning & development coach. Based on this participant's 90-day tracker data, write a concise progress report with: (1) quantitative summary, (2) qualitative insights from reflections and notes, (3) 3 specific recommended next steps. Be warm, professional, and actionable.\n\n${summary}` }] }) });
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.REACT_APP_ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: `You are a learning & development coach. Based on this participant's 90-day tracker data, write a concise progress report with: (1) quantitative summary, (2) qualitative insights from reflections and notes, (3) 3 specific recommended next steps. Be warm, professional, and actionable.\n\n${summary}` }]
+        })
+      });
       const data = await res.json();
       setReport(data.content?.map(c=>c.text||"").join("\n") || "Unable to generate report.");
     } catch { setReport("Error generating report. Please try again."); }
