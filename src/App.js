@@ -296,6 +296,8 @@ function ParticipantApp({user, dispatch}) {
   const reflectionDue = [30,60,90].includes(dayNum) && !data.reflections?.[dayNum];
   const streak = (()=>{ let s=0,d=new Date(); while(true){const k=d.toISOString().split("T")[0];if(!data.checkins?.[k])break;s++;d.setDate(d.getDate()-1);}return s; })();
   const isComplete = dayNum >= 90;
+  const isFirstDay = dayNum === 1;
+  const greeting = isFirstDay ? `Welcome, ${data.name?.split(" ")[0]}! 🎉` : `Welcome back, ${data.name?.split(" ")[0]}! 👋`;
 
   return (
     <div style={{minHeight:"100vh",background:C.bg}}>
@@ -315,17 +317,15 @@ function ParticipantApp({user, dispatch}) {
       <div style={{maxWidth:600,margin:"0 auto",padding:"1.5rem 1rem"}}>
         <div style={{background:`linear-gradient(135deg, ${C.accent}, #7c3aed)`,borderRadius:16,padding:"1.25rem 1.5rem",marginBottom:"1.25rem",color:"#fff"}}>
           <p style={{margin:"0 0 2px",fontSize:12,opacity:0.8,textTransform:"uppercase",letterSpacing:1}}>{currentPhase.label} · Day {dayNum} of 90</p>
-          <h2 style={{margin:"0 0 10px",fontSize:20,fontWeight:700}}>Welcome back, {data.name?.split(" ")[0]}! 👋</h2>
+          <h2 style={{margin:"0 0 10px",fontSize:20,fontWeight:700}}>{greeting}</h2>
           <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
             {[["🔥 Streak",streak+" days"],["✅ Check-ins",Object.keys(data.checkins||{}).length],["📝 Reflections",Object.keys(data.reflections||{}).length+"/3"]].map(([l,v])=>(
               <div key={l}><p style={{margin:0,fontSize:11,opacity:0.75}}>{l}</p><p style={{margin:0,fontSize:16,fontWeight:700}}>{v}</p></div>
             ))}
           </div>
-          {(isComplete||Object.keys(data.reflections||{}).length>0) && (
-            <button onClick={()=>generatePDF(data,isComplete)} style={{marginTop:10,fontSize:12,padding:"6px 14px",background:"rgba(255,255,255,0.2)",color:"#fff",border:"1px solid rgba(255,255,255,0.4)",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>
-              {isComplete?"⬇ Download completed PDP":"⬇ Download my PDP"}
-            </button>
-          )}
+          <button onClick={()=>generatePDF(data,isComplete)} style={{marginTop:10,fontSize:12,padding:"6px 14px",background:"rgba(255,255,255,0.2)",color:"#fff",border:"1px solid rgba(255,255,255,0.4)",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>
+            {isComplete?"⬇ Download completed PDP":"⬇ Download my PDP"}
+          </button>
         </div>
 
         <Card style={{marginBottom:"1.25rem",padding:"1rem 1.25rem"}}>
